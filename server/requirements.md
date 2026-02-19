@@ -1,0 +1,8 @@
+- Must be able to handle concurrent transfers
+- Must accept:
+    - --blksize [int]
+    - --timout [secs]
+    - --max-retries [int]
+- retransmit if ACK isn't received
+- send appropriate error codes
+- basically, just do everything the RFC details
