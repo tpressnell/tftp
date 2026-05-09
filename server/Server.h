@@ -56,16 +56,13 @@ TftpServer::TftpServer() {
 
   struct sockaddr_storage their_addr;
   socklen_t addr_len = sizeof their_addr;
+
   while (true) {
     void *recv_buffer = malloc(4096);
     std::cout << "Waiting on recvfrom()\n";
     int bytes_received = recvfrom(sock, recv_buffer, 4096, 0,
                                   (struct sockaddr *)&their_addr, &addr_len);
     std::cout << "Bytes received: " << bytes_received << '\n';
-    if (bytes_received == 0) {
-      std::cout << "Stopping handling " << socket << '\n';
-      break;
-    }
 
     std::cout << "Echoing back.\n";
     int bytes_sent = sendto(sock, recv_buffer, bytes_received, 0,
