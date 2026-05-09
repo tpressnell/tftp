@@ -5,6 +5,13 @@ class TftpPacket {
 public:
   virtual std::vector<unsigned char> *serialize() = 0;
   unsigned const char TERM = 0x00;
+  enum Type { ReadRequest = 1, WriteRequest, Data, Ack, Error };
+};
+
+class TftpPacketFactory {
+public:
+  static TftpPacket decodePacket(void *data, int data_length);
+  static int encodePacket(void *data, int data_length);
 };
 
 class ReadRequest : TftpPacket {
