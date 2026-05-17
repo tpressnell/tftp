@@ -2,25 +2,25 @@
 #include <vector>
 
 class TftpPacket {
-public:
-  virtual std::vector<unsigned char> *serialize() = 0;
+ public:
+  virtual std::vector<unsigned char>* serialize() = 0;
   unsigned const char TERM = 0x00;
   enum Type { ReadRequest = 1, WriteRequest, Data, Ack, Error };
 };
 
 class TftpPacketFactory {
-public:
-  static TftpPacket decodePacket(void *data, int data_length);
-  static int encodePacket(void *data, int data_length);
+ public:
+  static TftpPacket decodePacket(void* data, int data_length);
+  static int encodePacket(void* data, int data_length);
 };
 
 class ReadRequest : TftpPacket {
-public:
+ public:
   unsigned const short opcode = 0x0001;
   std::string filename;
   std::string mode = "octet";
-  std::vector<unsigned char> *serialize() {
-    std::vector<unsigned char> *p = new std::vector<unsigned char>();
+  std::vector<unsigned char>* serialize() {
+    std::vector<unsigned char>* p = new std::vector<unsigned char>();
     p->push_back(opcode & 0xFF);
     p->push_back(opcode >> 8 & 0xFF);
     for (int i = 0; i < filename.size(); i++) {
@@ -36,12 +36,12 @@ public:
 };
 
 class WriteRequest : TftpPacket {
-public:
+ public:
   unsigned const short opcode = 0x0002;
   std::string filename;
   std::string mode = "octet";
-  std::vector<unsigned char> *serialize() {
-    std::vector<unsigned char> *p = new std::vector<unsigned char>();
+  std::vector<unsigned char>* serialize() {
+    std::vector<unsigned char>* p = new std::vector<unsigned char>();
     p->push_back(opcode & 0xFF);
     p->push_back(opcode >> 8 & 0xFF);
     for (int i = 0; i < filename.size(); i++) {
@@ -57,12 +57,12 @@ public:
 };
 
 class Data : TftpPacket {
-public:
+ public:
   unsigned const short opcode = 0x0003;
   unsigned short block_number;
   std::vector<unsigned char> data;
-  std::vector<unsigned char> *serialize() {
-    std::vector<unsigned char> *p = new std::vector<unsigned char>();
+  std::vector<unsigned char>* serialize() {
+    std::vector<unsigned char>* p = new std::vector<unsigned char>();
     p->push_back(opcode & 0xFF);
     p->push_back(opcode >> 8 & 0xFF);
     p->push_back(block_number & 0xFF);
@@ -75,11 +75,11 @@ public:
 };
 
 class Ack : TftpPacket {
-public:
+ public:
   unsigned const short opcode = 0x0004;
   unsigned short block_number;
-  std::vector<unsigned char> *serialize() {
-    std::vector<unsigned char> *p = new std::vector<unsigned char>();
+  std::vector<unsigned char>* serialize() {
+    std::vector<unsigned char>* p = new std::vector<unsigned char>();
     p->push_back(opcode & 0xFF);
     p->push_back(opcode >> 8 & 0xFF);
     p->push_back(block_number & 0xFF);
@@ -89,12 +89,12 @@ public:
 };
 
 class Error : TftpPacket {
-public:
+ public:
   unsigned const short opcode = 0x0005;
   unsigned short error_code;
   std::string error_msg;
-  std::vector<unsigned char> *serialize() {
-    std::vector<unsigned char> *p = new std::vector<unsigned char>();
+  std::vector<unsigned char>* serialize() {
+    std::vector<unsigned char>* p = new std::vector<unsigned char>();
     p->push_back(opcode & 0xFF);
     p->push_back(opcode >> 8 & 0xFF);
     p->push_back(error_code & 0xFF);

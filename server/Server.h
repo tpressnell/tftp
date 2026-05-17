@@ -1,17 +1,18 @@
 #include <arpa/inet.h>
-#include <cstring>
-#include <iostream>
 #include <netdb.h>
-#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
+
+#include <cstring>
+#include <iostream>
+#include <string>
 #include <vector>
 
 class TftpServer {
-public:
+ public:
   TftpServer();
 
-private:
+ private:
   bool ready = false;
   std::string hash(std::string ip_address, std::string filename);
   std::vector<std::string> active_transfers;
@@ -20,7 +21,7 @@ private:
 TftpServer::TftpServer() {
   int status;
   struct addrinfo hints;
-  struct addrinfo *servinfo; // will point to the results
+  struct addrinfo* servinfo;  // will point to the results
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_INET;
@@ -40,8 +41,8 @@ TftpServer::TftpServer() {
     exit(1);
   }
 
-  sockaddr_in *ipv4 = (struct sockaddr_in *)servinfo->ai_addr;
-  void *addr = &(ipv4->sin_addr);
+  sockaddr_in* ipv4 = (struct sockaddr_in*)servinfo->ai_addr;
+  void* addr = &(ipv4->sin_addr);
   char ipstr[INET_ADDRSTRLEN];
   inet_ntop(servinfo->ai_family, addr, ipstr, sizeof ipstr);
   std::cout << "IP address that I will bind to: " << ipstr << '\n';
@@ -58,15 +59,15 @@ TftpServer::TftpServer() {
   socklen_t addr_len = sizeof their_addr;
 
   while (true) {
-    void *recv_buffer = malloc(4096);
+    void* recv_buffer = malloc(4096);
     std::cout << "Waiting on recvfrom()\n";
     int bytes_received = recvfrom(sock, recv_buffer, 4096, 0,
-                                  (struct sockaddr *)&their_addr, &addr_len);
+                                  (struct sockaddr*)&their_addr, &addr_len);
     std::cout << "Bytes received: " << bytes_received << '\n';
 
     std::cout << "Echoing back.\n";
     int bytes_sent = sendto(sock, recv_buffer, bytes_received, 0,
-                            (struct sockaddr *)&their_addr, addr_len);
+                            (struct sockaddr*)&their_addr, addr_len);
     std::cout << "Bytes sent: " << bytes_sent << '\n';
     free(recv_buffer);
   }
