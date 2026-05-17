@@ -1,11 +1,15 @@
+#include <iostream>
 #include <string>
 #include <vector>
 
 class TftpPacket {
  public:
-  virtual std::vector<unsigned char>* serialize() = 0;
-  unsigned const char TERM = 0x00;
-  enum Type { ReadRequest = 1, WriteRequest, Data, Ack, Error };
+  virtual std::ostream& asStream(std::ostream& stream) = 0;
+  static std::ostream& term(std::ostream& stream) {
+    stream << 0x00;
+    return stream;
+  }
+  enum Opcode : short { ReadRequest = 1, WriteRequest, Data, Ack, Error };
 };
 
 class TftpPacketFactory {
@@ -16,92 +20,76 @@ class TftpPacketFactory {
 
 class ReadRequest : TftpPacket {
  public:
-  unsigned const short opcode = 0x0001;
+  ReadRequest(std::string _filename, std::string _mode) {
+    filename = _filename;
+    mode = _mode;
+  };
+  const short opcode = Opcode::ReadRequest;
   std::string filename;
-  std::string mode = "octet";
-  std::vector<unsigned char>* serialize() {
-    std::vector<unsigned char>* p = new std::vector<unsigned char>();
-    p->push_back(opcode & 0xFF);
-    p->push_back(opcode >> 8 & 0xFF);
-    for (int i = 0; i < filename.size(); i++) {
-      p->push_back(filename[i]);
-    }
-    p->push_back(TftpPacket::TERM);
-    for (int i = 0; i < mode.size(); i++) {
-      p->push_back(mode[i]);
-    }
-    p->push_back(TftpPacket::TERM);
-    return p;
+  std::string mode;
+  std::ostream& asStream(std::ostream& stream) {
+    stream << opcode << filename << term << mode << term;
+    return stream;
   };
 };
 
 class WriteRequest : TftpPacket {
  public:
-  unsigned const short opcode = 0x0002;
+  WriteRequest(std::string _filename, std::string _mode) {
+    filename = _filename;
+    mode = _mode;
+  };
+  const short opcode = Opcode::WriteRequest;
   std::string filename;
-  std::string mode = "octet";
-  std::vector<unsigned char>* serialize() {
-    std::vector<unsigned char>* p = new std::vector<unsigned char>();
-    p->push_back(opcode & 0xFF);
-    p->push_back(opcode >> 8 & 0xFF);
-    for (int i = 0; i < filename.size(); i++) {
-      p->push_back(filename[i]);
-    }
-    p->push_back(TftpPacket::TERM);
-    for (int i = 0; i < mode.size(); i++) {
-      p->push_back(mode[i]);
-    }
-    p->push_back(TftpPacket::TERM);
-    return p;
+  std::string mode;
+  std::ostream& asStream(std::ostream& stream) {
+    stream << opcode << filename << term << mode << term;
+    return stream;
   };
 };
 
 class Data : TftpPacket {
  public:
-  unsigned const short opcode = 0x0003;
-  unsigned short block_number;
-  std::vector<unsigned char> data;
-  std::vector<unsigned char>* serialize() {
-    std::vector<unsigned char>* p = new std::vector<unsigned char>();
-    p->push_back(opcode & 0xFF);
-    p->push_back(opcode >> 8 & 0xFF);
-    p->push_back(block_number & 0xFF);
-    p->push_back(block_number >> 8 & 0xFF);
-    for (unsigned char c : data) {
-      p->push_back(c);
+  Data(short _blockNumber, char* _data, int _dataLength) {
+    blockNumber = _blockNumber;
+    data = _data;
+    dataLength = _dataLength;
+  }
+  const short opcode = Opcode::Data;
+  short blockNumber;
+  char* data;
+  int dataLength;
+  std::ostream& asStream(std::ostream& stream) {
+    stream << opcode << blockNumber;
+    for (int i = 0; i < dataLength; i++) {
+      stream << data[i];
     }
-    return p;
+    return stream;
   };
 };
 
 class Ack : TftpPacket {
  public:
-  unsigned const short opcode = 0x0004;
-  unsigned short block_number;
-  std::vector<unsigned char>* serialize() {
-    std::vector<unsigned char>* p = new std::vector<unsigned char>();
-    p->push_back(opcode & 0xFF);
-    p->push_back(opcode >> 8 & 0xFF);
-    p->push_back(block_number & 0xFF);
-    p->push_back(block_number >> 8 & 0xFF);
-    return p;
+  Ack(short _blockNumber) { blockNumber = _blockNumber; }
+  const short opcode = Opcode::Ack;
+  short blockNumber;
+  std::ostream& asStream(std::ostream& stream) {
+    stream << opcode << blockNumber;
+    return stream;
   };
 };
 
 class Error : TftpPacket {
  public:
-  unsigned const short opcode = 0x0005;
-  unsigned short error_code;
-  std::string error_msg;
-  std::vector<unsigned char>* serialize() {
-    std::vector<unsigned char>* p = new std::vector<unsigned char>();
-    p->push_back(opcode & 0xFF);
-    p->push_back(opcode >> 8 & 0xFF);
-    p->push_back(error_code & 0xFF);
-    p->push_back(error_code >> 8 & 0xFF);
-    for (int i = 0; i < error_msg.size(); i++) {
-      p->push_back(error_msg[i]);
-    }
-    return p;
+  Error(short _errorCode, std::string _errorMsg) {
+    errorCode = _errorCode;
+    errorMsg = _errorMsg;
+  }
+  const short opcode = Opcode::Error;
+  short errorCode;
+  std::string errorMsg;
+  std::ostream& asStream(std::ostream& stream) {
+    stream << opcode << errorCode << errorMsg << term;
+    return stream;
   };
 };
