@@ -13,9 +13,7 @@ class TftpServer {
   TftpServer();
 
  private:
-  bool ready = false;
-  std::string hash(std::string ip_address, std::string filename);
-  std::vector<std::string> active_transfers;
+  std::vector<uint32_t> active_transfers;
 };
 
 TftpServer::TftpServer() {
@@ -74,7 +72,3 @@ TftpServer::TftpServer() {
 
   freeaddrinfo(servinfo);
 }
-
-std::string TftpServer::hash(std::string ip_address, std::string filename) {
-  return ip_address + filename;
-};
