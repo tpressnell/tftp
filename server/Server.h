@@ -3,10 +3,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
+
+#include "../common/TftpPacket.h"
 
 class TftpServer {
  public:
@@ -53,21 +57,27 @@ TftpServer::TftpServer() {
     exit(1);
   }
 
-  struct sockaddr_storage their_addr;
+  struct sockaddr_in their_addr;
   socklen_t addr_len = sizeof their_addr;
+  inet_pton(AF_INET, "127.0.0.1", &their_addr.sin_addr);
+  their_addr.sin_port = 10001;
+  their_addr.sin_family = AF_INET;
 
   while (true) {
-    void* recv_buffer = malloc(4096);
-    std::cout << "Waiting on recvfrom()\n";
-    int bytes_received = recvfrom(sock, recv_buffer, 4096, 0,
-                                  (struct sockaddr*)&their_addr, &addr_len);
-    std::cout << "Bytes received: " << bytes_received << '\n';
-
-    std::cout << "Echoing back.\n";
-    int bytes_sent = sendto(sock, recv_buffer, bytes_received, 0,
+    std::cout << "Sending data\n";
+    int length = 0;
+    ReadRequest r = ReadRequest("Test", "binary");
+    void* to_send = r.serialize(length);
+    int bytes_sent = sendto(sock, to_send, length, 0,
                             (struct sockaddr*)&their_addr, addr_len);
     std::cout << "Bytes sent: " << bytes_sent << '\n';
-    free(recv_buffer);
+    if (bytes_sent == -1) {
+      std::cerr << "Failed to send\n";
+      std::cerr << errno << '\n';
+      exit(1);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    free(to_send);
   }
 
   freeaddrinfo(servinfo);

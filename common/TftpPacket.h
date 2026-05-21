@@ -1,3 +1,4 @@
+#include <cstring>
 #include <iostream>
 #include <string>
 
@@ -8,13 +9,13 @@ class TftpPacket {
     stream << 0x00;
     return stream;
   }
-  enum Opcode : short { ReadRequest = 1, WriteRequest, Data, Ack, Error };
-};
-
-class TftpPacketFactory {
- public:
-  static TftpPacket decodePacket(void* data, int data_length);
-  static int encodePacket(void* data, int data_length);
+  enum Opcode : short {
+    ReadRequest = 0x0100,
+    WriteRequest = 0x0200,
+    Data = 0x0300,
+    Ack = 0x0400,
+    Error = 0x0500
+  };
 };
 
 class ReadRequest : TftpPacket {
@@ -26,6 +27,18 @@ class ReadRequest : TftpPacket {
   const short opcode = Opcode::ReadRequest;
   std::string filename;
   std::string mode;
+  void* serialize(int& data_length) {
+    data_length = sizeof(Opcode) + filename.length() + 1 + mode.length() + 1;
+    void* data = malloc(data_length);
+    char* tmp = reinterpret_cast<char*>(data);
+    std::memcpy(tmp, &opcode, sizeof(Opcode));
+    tmp += sizeof(Opcode);
+    std::memcpy(tmp, filename.data(), filename.length() + 1);
+    tmp += filename.length() + 1;
+    std::memcpy(tmp, mode.data(), mode.length() + 1);
+
+    return data;
+  };
   std::ostream& asStream(std::ostream& stream) {
     stream << opcode << filename << term << mode << term;
     return stream;
