@@ -20,34 +20,34 @@ class TftpServer {
 };
 
 TftpServer::TftpServer() {
-  int status;
   struct addrinfo hints;
-  struct addrinfo* servinfo;  // will point to the results
+  struct addrinfo* server_info;
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
-  status = getaddrinfo(NULL, "10000", &hints, &servinfo);
+  int got_address_info = getaddrinfo(NULL, "10000", &hints, &server_info);
 
-  if (status != 0) {
-    std::cerr << "gai error: %s\n" << gai_strerror(status) << '\n';
+  if (got_address_info != 0) {
+    std::cerr << "gai error: %s\n" << gai_strerror(got_address_info) << '\n';
     exit(1);
   }
 
-  int sock =
-      socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+  int server_socket = socket(server_info->ai_family, server_info->ai_socktype,
+                             server_info->ai_protocol);
 
-  if (sock == -1) {
+  if (server_socket == -1) {
     std::cerr << "Failed to get socket descriptor\n";
     exit(1);
   }
 
-  sockaddr_in* ipv4 = (struct sockaddr_in*)servinfo->ai_addr;
+  sockaddr_in* ipv4 = (struct sockaddr_in*)server_info->ai_addr;
   void* addr = &(ipv4->sin_addr);
   char ipstr[INET_ADDRSTRLEN];
-  inet_ntop(servinfo->ai_family, addr, ipstr, sizeof ipstr);
+  inet_ntop(server_info->ai_family, addr, ipstr, sizeof ipstr);
 
-  int bound = bind(sock, servinfo->ai_addr, servinfo->ai_addrlen);
+  int bound =
+      bind(server_socket, server_info->ai_addr, server_info->ai_addrlen);
   if (bound == -1) {
     std::cerr << "Failed to bind to socket\n";
     std::cerr << errno << '\n';
@@ -60,7 +60,7 @@ TftpServer::TftpServer() {
   std::cout << "Listening on " << ipstr << ":10000" << std::endl;
   while (true) {
     void* recv_buffer = malloc(BLOCK_SIZE);
-    int bytes_received = recvfrom(sock, recv_buffer, BLOCK_SIZE, 0,
+    int bytes_received = recvfrom(server_socket, recv_buffer, BLOCK_SIZE, 0,
                                   (struct sockaddr*)&their_addr, &addr_len);
     std::cout << "Bytes received: " << bytes_received << std::endl;
     std::cout << "Opcode received: "
@@ -70,7 +70,7 @@ TftpServer::TftpServer() {
     free(recv_buffer);
   }
 
-  freeaddrinfo(servinfo);
+  freeaddrinfo(server_info);
 }
 
 TftpPacket::Opcode TftpServer::get_opcode(void* received_message) {

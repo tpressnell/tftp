@@ -17,29 +17,28 @@ class TftpClient {
   TftpClient();
 
  private:
-  const int BLOCK_SIZE = 4096;
   const int STARTING_LENGTH = 0;
   const int NO_FLAGS = 0;
 };
 
 TftpClient::TftpClient() {
   struct addrinfo hints;
-  struct addrinfo* server_info;  // results of server we want to talk to
+  struct addrinfo* server_info;
 
   memset(&hints, 0, sizeof hints);
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
-  int status = getaddrinfo(NULL, "10000", &hints, &server_info);
+  int got_address_info = getaddrinfo(NULL, "10000", &hints, &server_info);
 
-  if (status != 0) {
-    std::cerr << "gai error: " << gai_strerror(status) << std::endl;
+  if (got_address_info != 0) {
+    std::cerr << "gai error: " << gai_strerror(got_address_info) << std::endl;
     exit(1);
   }
 
-  int sock = socket(server_info->ai_family, server_info->ai_socktype,
+  int server_socket = socket(server_info->ai_family, server_info->ai_socktype,
                     server_info->ai_protocol);
 
-  if (sock == -1) {
+  if (server_socket == -1) {
     std::cerr << "Failed to get socket descriptor" << std::endl;
     exit(1);
   }
@@ -50,11 +49,11 @@ TftpClient::TftpClient() {
   inet_ntop(server_info->ai_family, addr, ipstr, sizeof ipstr);
 
   while (true) {
-    std::cout << "Sending data" << std::endl;
+    std::cout << "Sending data to " << ipstr << ":10000" << std::endl;
     int length = STARTING_LENGTH;
     ReadRequest r = ReadRequest("Test", "binary");
     void* to_send = r.serialize(length);
-    int bytes_sent = sendto(sock, to_send, length, NO_FLAGS,
+    int bytes_sent = sendto(server_socket, to_send, length, NO_FLAGS,
                             server_info->ai_addr, server_info->ai_addrlen);
     std::cout << "Bytes sent: " << bytes_sent << std::endl;
     if (bytes_sent == -1) {

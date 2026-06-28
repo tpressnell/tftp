@@ -4,11 +4,6 @@
 
 class TftpPacket {
  public:
-  virtual std::ostream& asStream(std::ostream& stream) = 0;
-  static std::ostream& term(std::ostream& stream) {
-    stream << 0x00;
-    return stream;
-  }
   enum Opcode : short {
     ReadRequest = 0x0001,
     WriteRequest = 0x0002,
@@ -62,10 +57,6 @@ class ReadRequest : TftpPacket {
 
     return data;
   };
-  std::ostream& asStream(std::ostream& stream) {
-    stream << opcode << filename << term << mode << term;
-    return stream;
-  };
 };
 
 class WriteRequest : TftpPacket {
@@ -74,13 +65,9 @@ class WriteRequest : TftpPacket {
     filename = _filename;
     mode = _mode;
   };
-  const short opcode = Opcode::WriteRequest;
+  const Opcode opcode = Opcode::WriteRequest;
   std::string filename;
   std::string mode;
-  std::ostream& asStream(std::ostream& stream) {
-    stream << opcode << filename << term << mode << term;
-    return stream;
-  };
 };
 
 class Data : TftpPacket {
@@ -90,28 +77,17 @@ class Data : TftpPacket {
     data = _data;
     dataLength = _dataLength;
   }
-  const short opcode = Opcode::Data;
+  const Opcode opcode = Opcode::Data;
   short blockNumber;
   char* data;
   int dataLength;
-  std::ostream& asStream(std::ostream& stream) {
-    stream << opcode << blockNumber;
-    for (int i = 0; i < dataLength; i++) {
-      stream << data[i];
-    }
-    return stream;
-  };
 };
 
 class Ack : TftpPacket {
  public:
   Ack(short _blockNumber) { blockNumber = _blockNumber; }
-  const short opcode = Opcode::Ack;
+  const Opcode opcode = Opcode::Ack;
   short blockNumber;
-  std::ostream& asStream(std::ostream& stream) {
-    stream << opcode << blockNumber;
-    return stream;
-  };
 };
 
 class Error : TftpPacket {
@@ -120,11 +96,7 @@ class Error : TftpPacket {
     errorCode = _errorCode;
     errorMsg = _errorMsg;
   }
-  const short opcode = Opcode::Error;
+  const Opcode opcode = Opcode::Error;
   short errorCode;
   std::string errorMsg;
-  std::ostream& asStream(std::ostream& stream) {
-    stream << opcode << errorCode << errorMsg << term;
-    return stream;
-  };
 };
