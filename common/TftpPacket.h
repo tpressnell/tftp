@@ -10,12 +10,36 @@ class TftpPacket {
     return stream;
   }
   enum Opcode : short {
-    ReadRequest = 0x0100,
-    WriteRequest = 0x0200,
-    Data = 0x0300,
-    Ack = 0x0400,
-    Error = 0x0500
+    ReadRequest = 0x0001,
+    WriteRequest = 0x0002,
+    Data = 0x0003,
+    Ack = 0x0004,
+    Error = 0x0005
   };
+  static std::string opcode_to_string(Opcode o) {
+    switch (o) {
+      case ReadRequest:
+        return "ReadRequest";
+      case WriteRequest:
+        return "WriteRequest";
+      case Data:
+        return "Data";
+      case Ack:
+        return "Ack";
+      case Error:
+        return "Error";
+    }
+    return "Unknown";
+  };
+
+  static char* serialize_opcode(Opcode opcode, char* buffer) {
+    *buffer = opcode >> 8 & 0xFF;
+    ++buffer;
+    *buffer = opcode & 0xFF;
+    ++buffer;
+
+    return buffer;
+  }
 };
 
 class ReadRequest : TftpPacket {
@@ -24,15 +48,14 @@ class ReadRequest : TftpPacket {
     filename = _filename;
     mode = _mode;
   };
-  const short opcode = Opcode::ReadRequest;
+  const Opcode opcode = Opcode::ReadRequest;
   std::string filename;
   std::string mode;
   void* serialize(int& data_length) {
     data_length = sizeof(Opcode) + filename.length() + 1 + mode.length() + 1;
     void* data = malloc(data_length);
     char* tmp = reinterpret_cast<char*>(data);
-    std::memcpy(tmp, &opcode, sizeof(Opcode));
-    tmp += sizeof(Opcode);
+    tmp = serialize_opcode(opcode, tmp);
     std::memcpy(tmp, filename.data(), filename.length() + 1);
     tmp += filename.length() + 1;
     std::memcpy(tmp, mode.data(), mode.length() + 1);
